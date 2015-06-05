@@ -1,0 +1,27 @@
+#inline policy for AWS IAM Role for specific Resource tag
+######################################################
+
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Action": [
+                "ec2:StartInstances",
+                "ec2:StopInstances",
+                "ec2:RebootInstances",
+                "ec2:TerminateInstances"
+            ],
+            "Condition": {
+                "StringEquals": {
+                    "ec2:ResourceTag/TAGKEY": "TAGVALUE"
+                }
+            },
+            "Resource": [
+                "arn:aws:ec2:ap-southeast-1:XXXXXXXXXXXX:instance/*"
+            ],
+            "Effect": "Allow"
+        }
+    ]
+}
+
+#replace TAGKEY/TAGVALUE with desired tag key-value that has to be provide access
