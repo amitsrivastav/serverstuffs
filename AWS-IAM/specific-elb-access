@@ -1,0 +1,30 @@
+## Create policy to provide an IAM user access for perticular loadbalancer
+
+{ 
+   "Version": "2012-10-17",
+   "Statement": [{
+      "Effect": "Allow",
+      "Action": "elasticloadbalancing:Describe*",
+      "Resource": "*"
+    },
+    { 
+      "Effect": "Allow",
+      "Action": [
+         "elasticloadbalancing:ApplySecurityGroupsToLoadBalancer",
+         "elasticloadbalancing:AttachLoadBalancerToSubnets",
+         "elasticloadbalancing:ConfigureHealthCheck",
+         "elasticloadbalancing:Create*",
+         "elasticloadbalancing:Delete*",
+         "elasticloadbalancing:DeregisterInstancesFromLoadBalancer",
+         "elasticloadbalancing:DetachLoadBalancerFromSubnets",
+         "elasticloadbalancing:DisableAvailabilityZonesForLoadBalancer",
+         "elasticloadbalancing:EnableAvailabilityZonesForLoadBalancer",
+         "elasticloadbalancing:ModifyLoadBalancerAttributes",
+         "elasticloadbalancing:RegisterInstancesWithLoadBalancer",
+         "elasticloadbalancing:Set*"
+       ],
+      "Resource": "arn:aws:elasticloadbalancing:us-west-2:1234567891011:loadbalancer/LOADBALANCERNAME"
+   }]
+}
+
+#replace LOADBALNACERNAME name to yours load balancer
