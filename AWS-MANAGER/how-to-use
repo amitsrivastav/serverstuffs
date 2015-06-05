@@ -1,0 +1,49 @@
+Available commands:
+
+    ag_delete                           delete the autoscale group
+    ami_backup                          create an ami of instance
+    apt-get                             Install package on host using apt-get
+    as_instances                        describe instances running in as_grou...
+    attach_lb_to_subnets                attach load balancer to a subnet
+    autoscale                           create autoscalling group
+    clear_cache                         Update the repository
+    create_lb                           create a new load balancer
+    create_spot_worker                  create a spot worker
+    create_worker                       create an on demand worker
+    deploy                              Release the code and reboot apache
+    deploy_worker                       deploy and restart worker instances
+    diff                                Do a diff of local master with the re...
+    elb_deregister                      deregister instance from elb
+    elb_instances                       Get a list of instance IDs for the EL...
+    elb_register                        Deregister instances from elb
+    enable_headers                      supervisor stop and kill all running ...
+    express_restart                     print python tools version
+    get_all_dbinstances                 get all rds instance
+    get_all_snapshots                   get all rds snapshots detail
+    get_taggedhost_list                 get instances private ip
+    install_package                     Install package on host using apt-get
+    install_pip_requirements            Installs pip requirements from the re...
+    launch_config                       Create a launch configuration for aut...
+    mongo_pip
+    ntpdate
+    pip                                 Installs pip requirements from the re...
+    prepare_deploy_list                 get instances private ip
+    pull                                Update the repository
+    push                                Push local master to origin master
+    release_code                        Release the code and reboot apache
+    remove_unhealthy_instance_from_elb
+    reset                               Reset all git repositories to specifi...
+    restart_apache2                     Reboot Apache2 server.
+    restore_dbinstance_from_dbsnapshot  restore db instance from rds snapshot...
+    scaling_policy                      define the scaing policy for the grou...
+    stop_apache2                        stop Apache2 server.
+    supervisor_start                    start supervisor process for instance
+    supervisor_stop                     supervisor stop and kill all running ...
+    sync_files
+    task_cpu                            get workers cpu utilization
+    terminate_worker                    terminate worker oif exceeds
+    update_perms                        Update the repository
+    workers_restart                     restart workers
+    workers_supervisorctl_status        get workers status
+    yolk                                print python tools version
+

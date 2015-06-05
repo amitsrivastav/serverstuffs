@@ -1,0 +1,7 @@
+AWS-MANAGER is script to manage aws resources remotely
+python boto library is required to use this 
+sudo apt-get/yum install python python-setuptools 
+pip install boto
+pip install fabric 
+
+
