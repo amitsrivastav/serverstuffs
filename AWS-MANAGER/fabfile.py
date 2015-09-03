@@ -156,7 +156,7 @@ def reset():
     """
     Reset all git repositories to specified hash.
     Usage:
-        fab staging reset:hash=etcetc123
+        fab staging reset:hash=$HASH
     """
     with cd(env['dir']):
         run('git reset --hard origin/master')
@@ -262,7 +262,7 @@ def ntpdate():
 import boto.ec2.autoscale
 from boto.ec2.autoscale import LaunchConfiguration
 from boto.ec2.autoscale import launchconfig
-from boto.ec2.autoscale import AutoScalingGroup
+from boto.ec2.autoscale import AutoScalingGroupe
 as_conn = boto.ec2.autoscale.connect_to_region("ap-southeast-1")
 @fab.task(alias='launch_config')
 def launch_config(lcname,image_id):
