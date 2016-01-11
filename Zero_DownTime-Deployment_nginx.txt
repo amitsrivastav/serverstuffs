@@ -1,0 +1,114 @@
+Framework Agnostic Zero Downtime Deployment with NGINX
+
+
+Some frameworks have zero-downtime capacity built-in. Furthermore, at a larger scale, you'll want to roll out changes using more advanced routing and control mechanism. Still, for years, I've been using a simple nginx configuration trick when deploying web apps which I think is pretty useful.
+
+The solution I use relies on alternating between two ports when deploying new code and having a short overlap between starting the new app and shutting down the existing one. The major downside is the doubling of resources for a brief period of time. At worse, you'll temporarily have twice the number of open connection to your DB, memory usage and so on.
+
+First let's look at a basic configuration:
+
+upstream webapp {
+  server 127.0.0.1:9923;
+  keepalive 32;
+}
+
+server {
+  listen 80;
+
+  proxy_http_version 1.1;
+  proxy_set_header Connection "";
+
+  location / {
+    proxy_pass http://webapp;
+  }
+}
+The simplest, and not very good solution, is to use the proxy_next_upstream directive and let nginx figure out which port our "webapp" is actually listening to:
+
+upstream webapp {
+  server 127.0.0.1:9923;
+  server 127.0.0.1:9924; #ADDEDD
+  keepalive 32;
+}
+
+server {
+  listen 80;
+
+  proxy_http_version 1.1;
+  proxy_set_header Connection "";
+  proxy_next_upstream error timeout; #ADDED
+  location / {
+    proxy_pass http://webapp;
+  }
+}
+The problem with this approach is the performance hit we get whenever the unavailable upstream is picked. We can tweak the frequency of that via the server's fail_timeout property, but ultimately this solution feels half-assed.
+
+The solution that I'm currently using is to define to upstream groups an rely on the backup attribute. First, the upstream definitions:
+
+upstream webapp_9923 {
+  server 127.0.0.1:9923;
+  server 127.0.0.1:9924 backup;
+  keepalive 32;
+}
+upstream webapp_9924 {
+  server 127.0.0.1:9923 backup;
+  server 127.0.0.1:9924
+  keepalive 32;
+}
+We then setup our proxy pass to use whatever our app is currently configured to use:
+
+{
+  ...
+  location / {
+    proxy_pass http://webapp_9923;
+  }
+}
+And, on deploy, we we switch from webapp_9923 to webapp_9924. This switching can happen in whatever tool you use to deploy, capistrano, fabric, whatever.
+
+As a more concrete example, let's say we have a web app that has a configuration file at /opt/webapp/config.json which looks like:
+
+{
+  "listen": "127.0.0.1:9923",
+  ....
+}
+You could use a bash script and sed to do the necessary configuration changes:
+
+#!/bin/bash
+CONFIG_FROM=127.0.0.1:9923
+CONFOG_TO=127.0.0.1:9924
+NGINX_FROM=http://webapp_9923
+NGINX_TO=http://webapp_9924
+
+# read our existing configuration file
+# and see if we should swap our to <-> from
+if grep --quiet 127.0.0.1:9924 /opt/webapp/config.json; then
+  CONFIG_FROM=127.0.0.1:9924
+  CONFIG_TO=127.0.0.1:9923
+  NGINX_FROM=http://webapp_9924
+  NGINX_TO=http://webapp_9923
+fi
+
+function rollback {
+  sed -i "s#$CONFIG_TO#$CONFIG_FROM#g" /opt/webapp/config.json
+}
+
+sed -i "s#$CONFIG_FROM#$CONFIG_TO#g" /opt/webapp/config.json
+if [ $? -ne 0 ]; then
+  exit 1
+fi
+
+sed -i "s#$NGINX_FROM#$NGINX_TO#g" /opt/nginx/sites-available/webapp
+if [ $? -ne 0 ]; then
+  rollback
+  exit 2
+fi
+
+## TODO: start a new web app
+
+# wait for it to start
+sleep 5
+
+# reload nginx to use the now running & listening app
+/etc/init.d/nginx reload
+
+## TODO: stop the existing web app
+For bonus points, since sed -i isn't portable, you could use perl -pi -e "s#$FROM#$TO#g" instead. Also, while NGINX should handle this well as-is, I normally shut down the currently running app by sending it a signal (SIGINT) which the app code catches and slowly shuts down. By slowy shutting down, I mean that, for a few seconds after receiving the signal, it'll keep answering requests but include a Connection: Close header in responses which should help clean up NGINX's keepalive connections.
