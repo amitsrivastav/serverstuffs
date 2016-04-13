@@ -1,0 +1,19 @@
+Apache – Prefork or Worker
+
+
+Apache is the most common and famous webserver. Everyone knows about apache and most of us also have hands on experience with apache. But few of us know that apcahe2 comes with 2 multi processing modules(MPMs):
+1. Prefork 2. Worker
+ 
+What is the difference between this two?
+Prefork MPM uses multiple child processes with one thread each and each process handles one connection at a time.
+Worker MPM uses multiple child processes with many threads each. Each thread handles one connection at a time.
+On most of the systems, speed of both the MPMs is comparable but prefork uses more memory than worker.
+ 
+Which one to use?
+On high traffic websites worker is preferable because of low memory usage as comparison to prefork MPM but prefork is more safe if you are using libraries which are not thread safe.
+For example you cannot use mod_php(not thread safe) with worker MPM but can use with prefork.
+So if you are using all thread safe libraries then go with worker and if you are not sure then use default prefork MPM, you may have to increase your RAM in case of high traffic.
+If you are on linux then run following command to check which MPM is on your machine?
+
+1	/usr/sbin/apache2 -V | grep MPM
+
