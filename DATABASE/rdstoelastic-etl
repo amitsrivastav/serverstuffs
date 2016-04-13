@@ -1,0 +1,226 @@
+For elastic search version 1.7.1
+installed it in standalone mode 
+
+added a plugin river-adbc in elastic search plugin 
+
+initialized a river configuration
+curl -XPUT localhost:9200/_river/awb/_meta
+{
+    "type": "jdbc",
+    "jdbc": {
+        "driver": "org.postgresql.DRIVER",
+        "url": "jdbc:postgresql://cloudlepards-rds.cps4vxlc300k.ap-southeast-1.rds.amazonaws.com:5432/cloudlepards_prod_db",
+   "user": "nuvo",
+        "password": "excloudlepards",
+        "sql": "select awb.awb,awb.is_active,zoning_pincode.pincode as awb_pincode,client_client_vendor.vendor_name as awb_vendor,status.on_update as status_update,status.status,status.remark,status.reason,manifest.is_active as manifest_active, ib1.branch_name as origin_branch_name,ib1.branch_zone as origin_zone,ib2.branch_name as destination_branch_name,ib2.branch_zone as destination_zone,ib3.branch_name as current_branch_name,ib3.branch_zone as current_zone,client_client.client_name as manifest_client,transit_tb.tb_id as current_tb,transit_mts.mts_id as current_mts,transit_drs.drs_id as current_drs,transit_rts.rts_id as current_rts,au1.username as current_fe,au2.username as status_updated_by,au3.username as manifest_uploaded_by,client_client_warehouse.warehouse_name as manifest_warehouse,ib4.branch_name as manifest_branch_name,ib4.branch_zone as manifest_zone from awb_awb as awb INNER JOIN awb_awb_status as status on(awb.id = status.awb_id) INNER JOIN awb_manifest as manifest on(status.manifest_id = manifest.id) INNER JOIN internal_branch ib1 on awb.origin_branch_id = ib1.id INNER JOIN internal_branch ib2 on awb.destination_branch_id = ib2.id INNER JOIN internal_branch ib3 on status.current_branch_id = ib3.id INNER JOIN zoning_pincode on(awb.pincode_id = zoning_pincode.id) INNER JOIN client_client_vendor on(awb.vendor_id = client_client_vendor.id) INNER JOIN client_client on(manifest.client_id = client_client.id) INNER JOIN transit_tb on(status.current_tb_id = transit_tb.id) INNER JOIN transit_mts on(status.current_mts_id = transit_mts.id) INNER JOIN transit_drs on(status.current_drs_id = transit_drs.id) INNER JOIN transit_rts on(status.current_rts_id = transit_rts.id) INNER JOIN auth_user as au1 on(status.current_fe_id = au1.id) INNER JOIN auth_user as au2 on(status.updated_by_id = au2.id) INNER JOIN auth_user as au3 on(manifest.uploaded_by_id = au3.id) INNER JOIN client_client_warehouse on(manifest.warehouse_id = client_client_warehouse.id) INNER JOIN internal_branch ib4 on manifest.branch_id = ib4.id;",
+        "index": “search",
+        "type": “jdbc",
+        "strategy" : "oneshot"
+
+        }
+}
+}
+
+
+Note that your jdbc index and type are for you to setup, it will make things accessible on http://localhost:9200/jdbc_index/jdbc_type/.
+
+The river will try its best to give your table fields the correct type in Elasticsearch, but if you want to setup custom type mappings, you can add another key in "jdbc" called "type_mapping". But be careful, the value of this should be a JSON string, so when you try to add this manually, you're going to end up with something like this:
+
+"type_mapping" : "{\"jdbc_type\":{\"properties\": {\"field\" : { \"type\" : \"string\" ... }}}}"
+To simplify this a bit, we can manually setup the type mapping after setting up the river.
+
+curl -XPUT "localhost:9200/jdbc_index/jdbc_type/_mapping" -d ' {  
+    "jdbc_type" : {
+        "properties" : {
+            "field" : {
+                "type" : “string”,
+                “index”: “not_analyzed”
+            }
+        }
+    }
+}'
+You've probably noticed on the first JSON the property "strategy" : "oneshot". This will do the query now, but only once. After this we can call the same _river again by using the "simple" strategy, and setting up a cron that will poll our database every hour. You could do this without ever doing the oneshot strategy, but you would have to wait until the cron "schedule" fire up, and you wouldn't want to wait an hour!
+
+curl -XPUT "localhost:9200/_river/my_table/_meta" -d ' {  
+    "type" : "jdbc",
+    "jdbc" : {
+        "url" : "jdbc:postgresql://localhost:5432/my_database",
+        "user" : "a_great_username",
+        "password" : "a_super_secret_password",
+        "sql" : "select * from my_table;"
+        "index" : "jdbc_index",
+        "type" : "jdbc_type",
+        "autocommit" : true,
+        "schedule" : "0 10 0-23 0  ?",
+        "strategy" : "simple"
+    }
+}'
+
+
+
+
+SELECT authors.id as _id, authors.last_name, authors.first_name, 
+books.id as \"Books.id\", books.title as \"Books.title\", 
+ books.subject_id as \"Books.subject_id\" 
+FROM public.authors left join public.books on books.author_id = authors.id order by authors.id
+
+
+
+
+SELECT * FROM awb_awb INNER JOIN awb_awb_status ON ( awb_awb.id = awb_awb_status".awb_id ) INNER JOIN awb_manifest ON ( awb_awb_status.manifest_id = awb_manifest.id )	
+
+
+
+
+
+{
+  "jdbc": {
+    "properties": {
+      "awb": {
+        "type": "string"
+      },
+      "awb_pincode": {
+        "type": "long"
+      },
+      "awb_vendor": {
+        "type": "string",
+        "index": "not_analyzed"
+      },
+      "current_branch_name": {
+        "type": "string",
+        "index": "not_analyzed"
+      },
+      "current_drs": {
+        "type": "string"
+      },
+      "current_fe": {
+        "type": "string"
+      },
+      "current_mts": {
+        "type": "string"
+      },
+      "current_rts": {
+        "type": "string"
+      },
+      "current_tb": {
+        "type": "string"
+      },
+      "current_zone": {
+        "type": "string"
+      },
+      "destination_branch_name": {
+        "type": "string",
+        "index": "not_analyzed"
+      },
+      "destination_zone": {
+        "type": "string"
+      },
+      "field": {
+        "type": "string",
+        "index": "not_analyzed"
+      },
+      "is_active": {
+        "type": "boolean"
+      },
+      "manifest_active": {
+        "type": "boolean"
+      },
+      "manifest_branch_name": {
+        "type": "string",
+        "index": "not_analyzed"
+      },
+      "manifest_client": {
+        "type": "string",
+        "index": "not_analyzed"
+      },
+      "manifest_uploaded_by": {
+        "type": "string",
+        "index": "not_analyzed"
+      },
+      "manifest_warehouse": {
+        "type": "string",
+        "index": "not_analyzed"
+      },
+      "manifest_zone": {
+        "type": "string"
+      },
+      "origin_branch_name": {
+        "type": "string",
+        "index": "not_analyzed"
+      },
+      "origin_zone": {
+        "type": "string"
+      },
+      "reason": {
+        "type": "string",
+        "index": "not_analyzed"
+      },
+      "remark": {
+        "type": "string",
+        "index": "not_analyzed"
+      },
+      "status": {
+        "type": "string"
+      },
+      "status_update": {
+        "type": "date",
+        "format": "dateOptionalTime"
+      },
+      "status_updated_by": {
+        "type": "string",
+        "index": "not_analyzed"
+      }
+    }
+  }
+}
+
+
+_______________
+
+{
+  "type": "jdbc",
+  "jdbc": {
+    "driver": "org.postgresql.DRIVER",
+    "url": "jdbc:postgresql://cloudlepards-rds.cps4vxlc300k.ap-southeast-1.rds.amazonaws.com:5432/cloudlepards_prod_db",
+    "user": "nuvo",
+    "password": "excloudlepards",
+    "sql": "select awb.id as _id,awb.awb,awb.is_active,zoning_pincode.pincode as awb_pincode,client_client_vendor.vendor_name as awb_vendor,status.on_update as status_update,status.status,status.remark,status.reason,manifest.is_active as manifest_active, ib1.branch_name as origin_branch_name,ib1.branch_zone as origin_zone,ib2.branch_name as destination_branch_name,ib2.branch_zone as destination_zone,ib3.branch_name as current_branch_name,ib3.branch_zone as current_zone,client_client.client_name as manifest_client,transit_tb.tb_id as current_tb,transit_mts.mts_id as current_mts,transit_drs.drs_id as current_drs,transit_rts.rts_id as current_rts,au1.username as current_fe,au2.username as status_updated_by,au3.username as manifest_uploaded_by,client_client_warehouse.warehouse_name as manifest_warehouse,ib4.branch_name as manifest_branch_name,ib4.branch_zone as manifest_zone from awb_awb as awb LEFT OUTER JOIN awb_awb_status as status on(awb.id = status.awb_id) LEFT OUTER JOIN awb_manifest as manifest on(status.manifest_id = manifest.id) LEFT OUTER JOIN internal_branch ib1 on (awb.origin_branch_id = ib1.id) LEFT OUTER JOIN internal_branch ib2 on (awb.destination_branch_id = ib2.id) LEFT OUTER JOIN internal_branch ib3 on (status.current_branch_id = ib3.id) LEFT OUTER JOIN zoning_pincode on(awb.pincode_id = zoning_pincode.id) LEFT OUTER JOIN client_client_vendor on(awb.vendor_id = client_client_vendor.id) LEFT OUTER JOIN client_client on(manifest.client_id = client_client.id) LEFT OUTER JOIN transit_tb on(status.current_tb_id = transit_tb.id) LEFT OUTER JOIN transit_mts on(status.current_mts_id = transit_mts.id) LEFT OUTER JOIN transit_drs on(status.current_drs_id = transit_drs.id) LEFT OUTER JOIN transit_rts on(status.current_rts_id = transit_rts.id) LEFT OUTER JOIN auth_user as au1 on(status.current_fe_id = au1.id) LEFT OUTER JOIN auth_user as au2 on(status.updated_by_id = au2.id) LEFT OUTER JOIN auth_user as au3 on(manifest.uploaded_by_id = au3.id) LEFT OUTER JOIN client_client_warehouse on(manifest.warehouse_id = client_client_warehouse.id) LEFT OUTER JOIN internal_branch ib4 on (manifest.branch_id = ib4.id) WHERE  awb.id = status.awb_id AND status.manifest_id = manifest.id;;",
+    "strategy": "simple",
+    "sqlparams": [
+      "$now"
+    ],
+    "poll": "5s"
+  },
+  "index": {
+    "index": "search",
+    "type": "jdbc",
+    "versioning": false,
+    "acknowledge": false
+  }
+}
+
+
+
+
+
+
+______________________________________________
+
+{
+  "type": "jdbc",
+  "jdbc": {
+    "driver": "org.postgresql.DRIVER",
+    "url": "jdbc:postgresql://cloudlepards-rds.cps4vxlc300k.ap-southeast-1.rds.amazonaws.com:5432/cloudlepards_prod_db",
+    "user": "cloud",
+    "password": "cloudlepards",
+    "sql": “select * from (select awb.id as _id,awb.awb,awb.creation.date,awb.is_active,zoning_pincode.pincode as awb_pincode,client_client_vendor.vendor_name as awb_vendor,status.on_update as status_update,status.status,status.remark,status.reason,manifest.is_active as manifest_active, ib1.branch_name as origin_branch_name,ib1.branch_zone as origin_zone,ib2.branch_name as destination_branch_name,ib2.branch_zone as destination_zone,ib3.branch_name as current_branch_name,ib3.branch_zone as current_zone,client_client.client_name as manifest_client,transit_tb.tb_id as current_tb,transit_mts.mts_id as current_mts,transit_drs.drs_id as current_drs,transit_rts.rts_id as current_rts,au1.username as current_fe,au2.username as status_updated_by,au3.username as manifest_uploaded_by,client_client_warehouse.warehouse_name as manifest_warehouse,ib4.branch_name as manifest_branch_name,ib4.branch_zone as manifest_zone from awb_awb as awb LEFT OUTER JOIN awb_awb_status as status on(awb.id = status.awb_id) LEFT OUTER JOIN awb_manifest as manifest on(status.manifest_id = manifest.id) LEFT OUTER JOIN internal_branch ib1 on awb.origin_branch_id = ib1.id LEFT OUTER JOIN internal_branch ib2 on awb.destination_branch_id = ib2.id INNER JOIN internal_branch ib3 on status.current_branch_id = ib3.id INNER JOIN zoning_pincode on(awb.pincode_id = zoning_pincode.id) INNER JOIN client_client_vendor on(awb.vendor_id = client_client_vendor.id) INNER JOIN client_client on(manifest.client_id = client_client.id) INNER JOIN transit_tb on(status.current_tb_id = transit_tb.id) INNER JOIN transit_mts on(status.current_mts_id = transit_mts.id) INNER JOIN transit_drs on(status.current_drs_id = transit_drs.id) INNER JOIN transit_rts on(status.current_rts_id = transit_rts.id) INNER JOIN auth_user as au1 on(status.current_fe_id = au1.id) INNER JOIN auth_user as au2 on(status.updated_by_id = au2.id) INNER JOIN auth_user as au3 on(manifest.uploaded_by_id = au3.id) INNER JOIN client_client_warehouse on(manifest.warehouse_id = client_client_warehouse.id) INNER JOIN internal_branch ib4 on manifest.branch_id = ib4.id) as elastic order by elastic._id;”,
+    "strategy": "simple",
+    "sqlparams": [
+      "$now"
+    ],
+    "poll": "5s",
+    "index": "search",
+    "versioning": false,
+    "acknowledge": false
+  }
+}

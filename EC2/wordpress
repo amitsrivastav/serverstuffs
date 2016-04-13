@@ -1,0 +1,63 @@
+ sudo apt-get update
+ sudo apt-get install htop
+ sudo apt-get install mysql-server
+ mysql -u root -p
+ wget https://wordpress.org/latest.tar.gz
+ tar xzvf latest.tar.gz
+ sudo apt-get install php5-gd libssh2-php php5-mysql
+
+ cd wordpress/
+  ls -l
+   14  cp wp-config-sample.php wp-config.php 
+   15  vim wp-config.php 
+   16  cd ..
+ sudo apt-get install nginx php5-fpm
+ sudo apt-get install language-pack-UTF-8
+ sudo locale-gen UTF-8
+ sudo apt-get install language-pack-UTF-8
+ sudo apt-get install language-pack-UTF-8*
+ sudo mkdir /var/www
+ sudo cp -r wordpress /var/www/
+ cd /var/www/wordpress/
+  ls -l
+ sudo cp /etc/nginx/sites-available/default /etc/nginx/sites-available/wordpress
+
+
+vim /etc/nginx/sites-available/wordpress
+#######################
+server {
+        listen 80 default_server;
+        listen [::]:80 default_server ipv6only=on;
+
+        root /var/www/wordpress;
+        index index.php index.html index.htm;
+
+        server_name www.example.com;
+
+        location / {
+                # try_files $uri $uri/ =404;
+                try_files $uri $uri/ /index.php?q=$uri&$args;
+        }
+
+        error_page 404 /404.html;
+
+        error_page 500 502 503 504 /50x.html;
+        location = /50x.html {
+                root /usr/share/nginx/html;
+        }
+
+        location ~ \.php$ {
+                try_files $uri =404;
+                fastcgi_split_path_info ^(.+\.php)(/.+)$;
+                fastcgi_pass unix:/var/run/php5-fpm.sock;
+                fastcgi_index index.php;
+                include fastcgi_params;
+        }
+}
+
+
+ sudo vim /etc/nginx/sites-available/wordpress
+ sudo ln -s /etc/nginx/sites-available/wordpress /etc/nginx/sites-enabled/
+  sudo rm /etc/nginx/sites-enabled/default
+   sudo service nginx restart
+  sudo service php5-fpm restart
