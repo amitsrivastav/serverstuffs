@@ -1,0 +1,36 @@
+[uwsgi]
+    master = true
+    processes = 10
+    chdir = /home/ubuntu/src/codebase/
+    plugin = python
+    socket = /var/run/uwsgi/app/apps/apps.sock
+    stats = /var/run/uwsgi/app/apps/apps-statsock
+    uid = ubuntu
+    gid = ubuntu
+    chown-socket = ubuntu
+    chmod-socket = 777
+    master = true
+    show-config = True
+   wsgi-file = /home/ubuntu/src/codebase/settings/wsgi.py
+#       module = prod:application
+    enable-threads = true
+        disable-logging = false
+        vacuum = True
+PYTHONPATH = /home/ubuntu/src/
+home = /home/ubuntu/src/
+ENV = prod
+   cheaper-algo = spare
+   cheaper = 20
+  cheaper-initial = 20
+    workers = 60
+  cheaper-step = 6
+  cheaper-overload = 5
+ buffer-size = 65535
+  memory-report = true
+  cheaper-step = 5
+#mount = /admin=/home/ubuntu/src/codebase/prod.py
+manage-script-name = true
+callable: prod
+post_max_size = 30M
+upload_max_filesize = 40M
+
