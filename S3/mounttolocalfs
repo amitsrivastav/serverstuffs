@@ -1,0 +1,117 @@
+Mount S3 File system to local file system
+
+The example provided in this guide will mount an S3 bucket named backup to /mnt/s3/backup on an EC2 instance running CentOS 6.3 (x86_64) or ubuntu.
+
+Requirements
+1.check if you have any existing s3fs or fuse package installed on your system. If installed it already remove it to avoid any file conflicts.
+
+
+2.Perform the following prerequisites on the target CentOS or RHEL machine as root.
+ # yum install gcc libstdc++-devel gcc-c++ curl-devel libxml2-devel openssl-devel mailcap make
+
+for Ubuntu :
+#sudo apt-get install build-essential libcurl4-openssl-dev libxml2-dev mime-support
+
+3.Download, compile, and install the FUSE (Filesystem in Userspace) module.
+
+# cd /usr/src/
+# wget http://downloads.sourceforge.net/project/fuse/fuse-2.X/2.9.3/fuse-2.9.3.tar.gz
+# tar xzf fuse-2.9.3.tar.gz
+# cd fuse-2.9.3
+# ./configure --prefix=/usr/local
+# make && make install
+# export PKG_CONFIG_PATH=/usr/local/lib/pkgconfig
+# ldconfig
+# modprobe fuse
+
+# s3fs --version
+Amazon Simple Storage Service File System 1.74
+
+Create an s3fs password file for storing your AWS Access Key ID and Secret Access Key.
+# echo AWS_ACCESS_KEY_ID:AWS_SECRET_ACCESS_KEY > ~/.passwd-s3fs
+# chmod 600 ~/.passwd-s3fs
+
+The default location for the s3fs password file can be created:
+using the system-wide /etc/passwd-s3fs file
+
+The s3fs password file has the following format. Use this format if you have only one set of credentials. Specify your AWS Access Key ID and Secret Access Key separated by a colon with no spaces between.
+
+
+AccessKeyId:SecretAccessKey
+If have more than one set of credentials, then you can have default credentials as specified above, but the format includes the bucket name and the default S3 credentials, all separated by a colon with no spaces between.
+
+
+my-s3-bucket:AccessKeyId:SecretAccessKey
+where my-s3-bucket is the S3 bucket name to mount, AccessKeyId is the Access Key ID, and SecretAccessKey is the Secret Access Key.
+
+The AWS Access Key ID and Secret Access Key serve the purpose of ID and Password to access Amazon S3. Navigate to Security Credentials, click on the Access Keys tab under Access Credentials to create or view your Access Key ID and Secret Access Key.
+
+Note: The AWS Access Key ID and Secret Access Key displayed below are not my actual S3 security credentials. It is nothing more than a set of random characters and is only being shown to display example output. It is not valid. However, if you have a lot of time on your hands, give it a try!
+
+
+
+Mount S3 Bucket
+
+Create a mount point directory for the S3 bucket and use the s3fs command to mount it.
+
+Create a directory for mounting the S3 bucket.
+
+
+# mkdir -p /mnt/s3/backup
+Mount the S3 bucket using the correct permissions and any other options.
+
+
+# s3fs -o allow_other -o use_cache=/tmp backup /mnt/s3/backup
+The -o allow_other option allows all other users on the server read / write access to the mounted directory. Obviously, this can be a huge security hole.
+The -o use_cache=/tmp option specifies the location where to store locally cached folders and files. This enables local file caching which minimizes downloads.
+Note: make certain you have plenty of space dedicated to the cache directory before considering this option. Depending on the size of the files being copied, this directory can fill up very quickly!
+The -o default_acl=public-read-write option will set anything you write to the bucket as publicly viewable and writable (by default, it's set to private).
+The -o default_acl=public-read option will set anything you write to the bucket as publicly viewable (by default, it's set to private).
+Verify the s3fs mounted file system.
+
+
+# grep s3fs /etc/mtab
+s3fs /mnt/s3/backup fuse.s3fs rw,nosuid,nodev,allow_other 0 0
+
+
+# df -Th /mnt/s3/backup
+Filesystem    Type    Size  Used Avail Use% Mounted on
+s3fs     fuse.s3fs    256T     0  256T   0% /mnt/s3/backup
+
+Manually unmount the virtual drive using the umount command:
+
+
+# umount /mnt/s3/backup
+Automatically mount the S3 bucket when the server boots by adding an entry to /etc/fstab using the following syntax:
+
+
+s3fs#bucketname /mnt/mount_folder fuse option1,option2 0 0
+For example:
+
+
+s3fs#idevelopment-software /mnt/s3/backup fuse allow_other,use_cache=/tmp 0 0
+s3fs Limitations
+
+UID/GID Support
+
+At this time, there is no full UID/GID support. All files will be owned by root. Additionally, if you allow others to access the bucket (using the -o allow_other option), others can also remove files.
+
+Excessive Time-outs
+
+Currently s3fs can hang the CPU if you have lots of time-outs. This is not a fault of s3fs but rather libcurl. This happens when you try to copy thousands of files in 1 session, it doesn't happen when you upload hundreds of files or less.
+
+Moving Large Files
+
+Moving, renaming, or erasing files may take considerable time since the whole file needs to be accessed first. A workaround could be to use s3fs's cache support with the -o use_cache=<directory> mount option.
+
+File Size
+
+S3FS has a file size limit of 64GB for the current version (limited by s3fs, not Amazon).
+
+Directory Support
+
+Prior to configuring s3fs on my test system, I used the AWS Management Console to create several directories and to upload some files to the target S3 bucket I intended to mount (idevelopment-software). After mounting the bucket to the local file system, I was unable to see any of the directories. I could see the files I uploaded to the root directory of the bucket, but was unable to see any of the directories. I went back to the AWS Management Console and even to S3Fox and verified that the directories did indeed exist.
+
+It turns out that S3 does not have a native concept of a folder (i.e. directory). It is up to each S3 client tool (AWS Console, S3Fox, s3cmd, s3fs) to implement their own strategy for handling folders. Without a common specification in place for storing folders, certain S3 client tools will build directory structures that are not compatible with one another. In my example, the folders I created in the AWS Management Console were not compatible with s3fs.
+
+Unfortunately, the only solution for now is to adopt a single S3 tool exclusively to modify the contents of a bucket. For the S3 buckets I intend to mount, I will only be using s3fs against the contents of those buckets

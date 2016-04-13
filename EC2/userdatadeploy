@@ -1,0 +1,11 @@
+## lets suppose a python codebase is places in /home/ubuntu/src/codebase
+## code is running using uwsgi middleware 
+
+#!/bin/bash
+sudo su - ubuntu << EOF
+cd ~/src/codebase/
+git pull origin master
+#any other steps required can be defined here
+sudo /etc/init.d/uwsgi restart
+#restart uwsgi middleware 
+EOF

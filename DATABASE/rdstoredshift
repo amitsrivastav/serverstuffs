@@ -1,0 +1,30 @@
+## transfer multiple tables data from rds to redshift 
+## put the table_names in a file refered as FILENAME
+
+
+#import tables data from RDS 
+#!/bin/bash
+
+##create a directory to put data in it
+mkdir redshift`date +"%d%m%Y"`
+DIR=redshift`date +"%d%m%Y"`
+
+## copy data from postgresql to machine local directory
+for i in `cat FILENAME`
+do
+psql postgresql://USERNAME:PASSWRORD@RDSHOSTNAME/DATABASE << EOF
+\copy $i to '$DIR/$i.csv'
+EOF
+done
+
+## S3 location for files to put over
+S3DIR=s3://PUTS3DIRHERE/
+s3cmd put —recursive $DIR $S3DIR
+
+## to put data back from S3 to redshift 
+for i in `cat FILENAME`
+do
+psql postgresql://USERNAME:PASSWORD@REDSHIFTHOSTNAME:5439/DATABASE << EOF
+copy $i from ‘$S3DIR/$DIR/$i.csv' credentials 'aws_access_key_id=AWSACCESSKEY;aws_secret_access_key=AWSSECRETKEY' csv delimiter ',' null as '\\N' TRUNCATECOLUMNS  region as 'us-east-1';
+EOF
+done

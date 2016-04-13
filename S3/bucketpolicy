@@ -1,0 +1,28 @@
+## add bucket policy for a specific IAM role to get object and other actions
+
+{
+	"Version": "2012-10-17",
+	"Statement": [
+		{
+			"Sid": "PublicReadForGetBucketObjects",
+			"Effect": "Allow",
+			"Principal": {
+				"AWS": "*"
+			},
+			"Action": "s3:GetObject",
+			"Resource": "arn:aws:s3:::$BUCKETNAME/*"
+		},
+		{
+			"Sid": "",
+			"Effect": "Allow",
+			"Principal": {
+				"AWS": "arn:aws:iam::AWSACCOUNTID:user/$USERNAME"
+			},
+			"Action": "s3:*",
+			"Resource": [
+				"arn:aws:s3:::$BUCKETNAME",
+				"arn:aws:s3:::$BUCKETNAME/*"
+			]
+		}
+	]
+}
