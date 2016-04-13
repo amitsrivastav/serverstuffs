@@ -1,0 +1,2 @@
+## to get RDS logs from AWS for a specific date 
+for i in {00..23}; do aws rds download-db-log-file-portion --db-instance-identifier nuvoex-rds --log-file-name error/postgresql.log.2015-09-21-$i --output text >> postgres.log; done

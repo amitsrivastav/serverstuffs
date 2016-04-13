@@ -1,0 +1,9 @@
+#python script to transfer file over ftp
+
+import ftplib
+session = ftplib.FTP(’example.com', 'ftpuser', 'ftppasswd’)
+file = open('requirements.txt’)
+session.storbinary('STOR requirements.txt', file)
+file.close()
+session.quit()
+

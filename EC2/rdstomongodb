@@ -1,0 +1,25 @@
+RDS TO MONGODB
+
+1.rds data to migrate in mongo using csv import
+2.staging and branching structure to be fixed
+3.new relic server
+
+
+copy schema from postgres
+
+COPY (select * from information_schema.columns) TO '/Users/amit/postgres/databackup/columns.csv' with delimiter ',' csv header;
+COPY 2191
+cloudleopards_prod_db=# \q
+ 
+\COPY awb_awb TO awb.csv DELIMITER ',' CSV HEADER;
+ 
+ 
+do psql export  from postgres to csv format in bulk
+ 
+while read p; do psql 
+cloudleopards_prod_db -F , --no-align -c "\COPY $p TO $p.csv DELIMITER ',' CSV HEADER;"; done < tables
+ 
+ 
+restore csv data to mognodb
+ 
+while read p; do mongoimport -h localhost -d mongodatabase --file $p.csv --type csv  --headerline; done < tables

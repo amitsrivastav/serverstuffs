@@ -1,0 +1,29 @@
+THESITE= "SITE-NAME"
+tar czf /var/www/_backups/sitebackup_${THESITE}_${THEDATE}.tar -C / var/www/$THESITE/html
+This assumes your web files are in /var/www/domain.tld/html so edit as needed for your setup.
+To delete older backups, we can use find plus the -exec option
+find /var/www/_backups/site* -mtime +5 -exec rm {} \;
+find /var/www/_backups/db* -mtime +5 -exec rm {} \;
+
+
+#!/bin/sh
+
+THESITE= "SITE-NAME"
+THEDB="DATABASE-NAME"
+THEDBUSER="DATABASE-USER"
+THEDBPW="DATABASE-USER-PASSWORD"
+THEDATE=`date +%d%m%y%H%M`
+
+# export database
+mysqldump -u $THEDBUSER -p${THEDBPW} $THEDB | gzip > /var/www/_backups/dbbackup_${THEDB}_${THEDATE}.bak.gz
+
+# export files
+tar czf /var/www/_backups/sitebackup_${THESITE}_${THEDATE}.tar -C / var/www/$THESITE/html
+
+# remove backups older than 5 days
+find /var/www/_backups/site* -mtime +5 -exec rm {} \;
+find /var/www/_backups/db* -mtime +5 -exec rm {} \;
+
+# sync to amazon
+/usr/local/bin/aws s3 sync /var/www/_backups s3://BUCKET-NAME --delete
+

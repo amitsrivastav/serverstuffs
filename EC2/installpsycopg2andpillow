@@ -1,0 +1,32 @@
+
+
+#put the below command on system wide
+sudo apt-get install python-psycopg2
+and then activate virtual env
+pip install psycopg2
+#create user and grant privileges
+create user USERNAME with password 'PASSWORD'
+create database DATABASENAME
+GRANT ALL PRIVILEGES ON DATABASE DATABASENAME TO USERNAME;
+ 
+sudo apt-get install libpq-dev python-dev
+sudo apt-get install python-pip
+virtualenv src
+
+
+for postgres
+
+sudo apt-get install postgresql postgresql-contrib
+
+
+#install pillow in virtual env
+
+just install  in system wide
+
+sudo apt-get install libtiff5-dev libjpeg8-dev zlib1g-dev libfreetype6-dev liblcms2-dev libwebp-dev tcl8.6-dev tk8.6-dev python-tk
+and then activate virtual env 
+
+pip install pillow
+
+
+
