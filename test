@@ -1,0 +1,6 @@
+hipsaint --token=S1D8zIR5gGCP3RGt12sUEJ6upXqVDoTyY55qJ1qM --room=3583664 --type=service --inputs="Main Website|solr|Wed Jul 31 20:42:28 IST 2013|RECOVERY|192.168.70.15|OK|Ping OK"
+
+
+
+
+hipsaint --token=3SmX2gIecmNwqCc0cVgIEIkEy1oZtm6D3d8OoqOW --room=3583664 --type=service --inputs="Main Website|solr|Wed Jul 31 20:42:28 IST 2013|RECOVERY|192.168.70.15|OK|Ping OK"
