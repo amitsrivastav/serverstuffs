@@ -1,0 +1,6 @@
+run_cmd = (cmd, args, cb ) ->    spawn = require("child_process").spawn    opts =        env: {}    child = spawn(cmd, args, opts)    child.stdout.on "data", (buffer) -> cb buffer.toString()    child.stderr.on "data", (buffer) -> cb buffer.toString()module.exports = (robot) ->  robot.respond /docker restart (.*)/i, (msg) ->    msg.send "Restarting "+msg.match[1].replace(/[\W]+/g, "")+"..."    run_cmd "docker", ["restart", msg.match[1].replace(/[\W]+/g, "")], (text) -> msg.send text  robot.respond /docker ps on (.*)$/i, (msg) ->    hostname = msg.match[1]    run_cmd '/home/bot/mybot/scripts/docker.sh', ['ps',hostname], (text) -> msg.send text  robot.respond /docker deploy (.*) on (.*)$/i, (msg) ->    appname = msg.match[1]    hostname = msg.match[2]    run_cmd '/home/bot/mybot/sscripts/docker2.sh', [hostname, appname], (text) -> msg.send text++++++
+
+
+
+##docker2.sh
+#!/bin/bashhostname=$1appname=$2#acontainername=$2OSV=$(ssh root@$hostname cat /etc/redhat-release)OSV2="Red Hat Enterprise Linux Server release 7.2 (Maipo)"if [ "$hostname" == "fanlvetech1t" ];thenssh root@$hostname /home/user/hou/srivaa2/dockerfiles/dockerfiles-1.13/$2/deployecho "done with deploy action for $2 on $1"elsessh root@$hostname `/home/user/hou/srivaa2/dockerfiles/dockerfiles-1.7/$2/deploy`echo "triggered deploy action for $2 on $1"fi
